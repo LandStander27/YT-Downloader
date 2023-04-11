@@ -21,7 +21,9 @@ struct Video {
 	url: String,
 	filename: Filename,
 	ext: Filename,
-	title: String
+	title: String,
+	channel: String,
+	duration: String
 }
 
 impl Video {
@@ -116,11 +118,41 @@ impl Video {
 				.expect("Unable to call yt-dlp");
 		}));
 
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("channel")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("duration_string")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
 		let video = threads.remove(0).join().unwrap();
 		let audio = threads.remove(0).join().unwrap();
 		let title = threads.remove(0).join().unwrap();
 		let video_ext = threads.remove(0).join().unwrap();
 		let audio_ext = threads.remove(0).join().unwrap();
+		let channel = threads.remove(0).join().unwrap();
+		let duration = threads.remove(0).join().unwrap();
 
 		return Self {
 			url: url,
@@ -132,7 +164,9 @@ impl Video {
 				video: String::from_utf8(video_ext.stdout).unwrap().trim().to_string(),
 				audio: String::from_utf8(audio_ext.stdout).unwrap().trim().to_string()
 			},
-			title: String::from_utf8(title.stdout).unwrap().trim().to_string()
+			title: String::from_utf8(title.stdout).unwrap().trim().to_string(),
+			channel: String::from_utf8(channel.stdout).unwrap().trim().to_string(),
+			duration: String::from_utf8(duration.stdout).unwrap().trim().to_string(),
 		}
 	}
 
@@ -212,6 +246,84 @@ impl Video {
 	
 	}
 
+}
+
+struct Playlist {
+	title: String,
+	video_amount: u32,
+	creator: String
+}
+
+impl Playlist {
+	fn new(url: String) -> Self {
+
+		let parse = Url::parse(url.as_str());
+		match parse {
+			Ok(u) => {
+				if !(u.host() == Some(url::Host::Domain("youtube.com")) || u.host() == Some(url::Host::Domain("www.youtube.com"))) {
+					eprintln!("Invalid video url");
+					exit(1);
+				}
+				println!("Verfied URL");
+			},
+			Err(e) => {
+				eprintln!("Could not parse url: {}", e);
+				exit(1);
+			}
+		}
+
+		let mut threads: Vec<thread::JoinHandle<std::process::Output>> = Vec::new();
+
+		let mut url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("--lazy-playlist")
+				.arg("--print")
+				.arg("playlist_title")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("--lazy-playlist")
+				.arg("--print")
+				.arg("playlist_count")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("--lazy-playlist")
+				.arg("--print")
+				.arg("playlist_uploader")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		let title = threads.remove(0).join().unwrap();
+		let count = threads.remove(0).join().unwrap();
+		let creator = threads.remove(0).join().unwrap();
+
+		return Self {
+			title: String::from_utf8(title.stdout).unwrap().trim().split("\n").collect::<Vec<&str>>()[0].trim().to_string(),
+			video_amount: String::from_utf8(count.stdout).unwrap().split("\n").collect::<Vec<&str>>()[0].trim().parse().unwrap(),
+			creator: String::from_utf8(creator.stdout).unwrap().trim().split("\n").collect::<Vec<&str>>()[0].trim().to_string()
+		}
+
+	}
 }
 
 fn download_yt_dlp() {
@@ -300,6 +412,7 @@ fn progressbar(rx: Receiver<i32>, label: String) {
 }
 
 fn combine_files(video: String, audio: String, out: String) {
+	let out_2 = out.replace("/", "").replace("\\", "").replace(":", "").replace("*", "").replace("?", "").replace("\"", "").replace("<", "").replace(">", "").replace("|", "");
 	let _ = Command::new(&exe_dir("ffmpeg.exe"))
 		.arg("-i")
 		.arg(video)
@@ -308,7 +421,7 @@ fn combine_files(video: String, audio: String, out: String) {
 		.arg("-c")
 		.arg("copy")
 		.arg("-y")
-		.arg(out)
+		.arg(out_2)
 		.stderr(Stdio::piped())
 		.stdin(Stdio::piped())
 		.stdout(Stdio::piped())
@@ -346,6 +459,7 @@ fn download_playlist(url: &str) {
 		progressbar(vid.download_video(), format!("{}/{}", i+1, amount));
 		progressbar(vid.download_audio(), format!("{}/{}", i+1, amount));
 		println!("Combining files.");
+
 		combine_files(vid.filename.video.clone(), vid.filename.audio.clone(), format!("{}.{}", vid.title, vid.ext.video));
 
 		// println!("Removing temp files.");
@@ -367,6 +481,8 @@ fn read(prompt: &str) -> String {
 	return buffer.trim().to_string();
 }
 
+
+
 fn main() {
 
 	if !Path::new(&exe_dir("yt-dlp.exe")).exists() {
@@ -377,7 +493,7 @@ fn main() {
 	}
 
 	let args: Vec<String> = std::env::args().collect();
-	
+
 	if args.len() == 1 {
 
 		let url = read("Url (Can be playlist or video) ? ");
@@ -388,7 +504,7 @@ fn main() {
 			exit(1);
 		}
 
-		if !url.starts_with("https://www.youtube.com/playlist") {
+		if !url.starts_with("https://youtube.com/playlist") && !url.starts_with("https://www.youtube.com/playlist") {
 			println!("Loading.");
 			let mut vid = Video::new(url);
 			// progressbar(vid.download_video());
@@ -420,7 +536,7 @@ fn main() {
 				std::fs::remove_file(vid.filename.audio).unwrap();
 			}
 
-	
+
 			println!("Done.");
 		} else {
 			println!("Loading.");
@@ -432,12 +548,47 @@ fn main() {
 		rpassword::prompt_password("Press enter to exit ").unwrap();
 
 	} else {
-		if !args[1].starts_with("https://www.youtube.com/playlist") {
+
+		if args[1..].contains(&"--help".to_string()) {
+
+			println!("
+YT-Downloader made in Rust
+
+usage:
+yt_down [url] [arguments]
+
+Arguments:
+
+--help:   Show this menu
+--audio:  Only download the audio (only available for single videos)
+--info:   Only show the info of the video/playlist
+--github: Open the github in the default browser");
+
+			exit(0);
+		}
+
+		if args[1..].contains(&"--github".to_string()) {
+
+			open::that("https://github.com/LandStander27/YT-Downloader").unwrap();
+
+			exit(0);
+		}
+
+		if !args[1].starts_with("https://youtube.com/playlist") && !args[1].starts_with("https://www.youtube.com/playlist") {
 			println!("Loading.");
 			let mut vid = Video::new(args[1].to_string());
 			// progressbar(vid.download_video());
 
-			if args[1..].contains(&"--audio".to_string()) {
+			if args[1..].contains(&"--info".to_string()) {
+
+				println!("
+Title: {}
+Uploader: {}
+Duration: {}", vid.title, vid.channel, vid.duration);
+
+				exit(0);
+
+			} else if args[1..].contains(&"--audio".to_string()) {
 				progressbar(vid.download_audio(), "Downloading audio".to_string());
 				
 				let _ = Command::new(&exe_dir("ffmpeg.exe"))
@@ -468,6 +619,19 @@ fn main() {
 			println!("Done.");
 		} else {
 			println!("Loading.");
+
+			if args[1..].contains(&"--info".to_string()) {
+
+				let playlist = Playlist::new(args[1].to_string());
+
+				println!("
+Title: {}
+Creator: {}
+Video amount: {}", playlist.title, playlist.creator, playlist.video_amount);
+
+				exit(0);
+			}
+
 			download_playlist(&args[1]);
 			println!("Done.");
 
