@@ -23,7 +23,10 @@ struct Video {
 	ext: Filename,
 	title: String,
 	channel: String,
-	duration: String
+	duration: String,
+	views: u64,
+	likes: u64,
+	channel_subs: u64
 }
 
 impl Video {
@@ -146,6 +149,48 @@ impl Video {
 				.expect("Unable to call yt-dlp");
 		}));
 
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("view_count")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("like_count")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("channel_follower_count")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
 		let video = threads.remove(0).join().unwrap();
 		let audio = threads.remove(0).join().unwrap();
 		let title = threads.remove(0).join().unwrap();
@@ -153,6 +198,9 @@ impl Video {
 		let audio_ext = threads.remove(0).join().unwrap();
 		let channel = threads.remove(0).join().unwrap();
 		let duration = threads.remove(0).join().unwrap();
+		let views = threads.remove(0).join().unwrap();
+		let likes = threads.remove(0).join().unwrap();
+		let channel_subs = threads.remove(0).join().unwrap();
 
 		return Self {
 			url: url,
@@ -167,6 +215,10 @@ impl Video {
 			title: String::from_utf8(title.stdout).unwrap().trim().to_string(),
 			channel: String::from_utf8(channel.stdout).unwrap().trim().to_string(),
 			duration: String::from_utf8(duration.stdout).unwrap().trim().to_string(),
+			views: String::from_utf8(views.stdout).unwrap().trim().parse().unwrap(),
+			likes: String::from_utf8(likes.stdout).unwrap().trim().parse().unwrap(),
+			channel_subs: String::from_utf8(channel_subs.stdout).unwrap().trim().parse().unwrap()
+
 		}
 	}
 
@@ -583,8 +635,11 @@ Arguments:
 
 				println!("
 Title: {}
-Uploader: {}
-Duration: {}", vid.title, vid.channel, vid.duration);
+Duration: {}
+Views: {}
+Likes: {}
+Channel: {}
+Channel subscribers: {}", vid.title, vid.duration, vid.views, vid.likes, vid.channel, vid.channel_subs);
 
 				exit(0);
 
