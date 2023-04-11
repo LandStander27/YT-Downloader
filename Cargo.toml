@@ -1,0 +1,16 @@
+[package]
+name = "yt_down"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = {version = "0.11.16", features = ["blocking"]}
+ureq = "2.6.2"
+terminal_size = "0.2.6"
+colored = "2.0.0"
+zip = "0.6.4"
+url = "2.3.1"
+rpassword = "7.2.0"
+threadpool = "1.8.1"
