@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio, exit};
 use std::io::{BufRead, BufReader, Write};
-use std::fs::{File, rename};
+use std::fs::File;
 use std::path::{Path};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
