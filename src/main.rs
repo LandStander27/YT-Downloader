@@ -483,7 +483,7 @@ fn combine_files(video: String, audio: String, out: String) {
 
 fn download_playlist(url: &str) {
 
-	println!("If the selected playlist is big, it could take a while to start downloading.");
+	println!("If the selected playlist is big (>100), it could take a while to start downloading.");
 
 	let playlist = Playlist::new(url.to_string());
 	let folder = playlist.title.clone().replace("/", "").replace("\\", "").replace(":", "").replace("*", "").replace("?", "").replace("\"", "").replace("<", "").replace(">", "").replace("|", "");
