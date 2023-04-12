@@ -507,8 +507,8 @@ fn download_playlist(url: &str) {
 		let mut vid = Video::new(url);
 		// progressbar(vid.download_video());
 
-		progressbar(vid.download_video(), format!("{}/{}", i+1, amount));
-		progressbar(vid.download_audio(), format!("{}/{}", i+1, amount));
+		progressbar(vid.download_video(), format!("{}/{}:1", i+1, amount));
+		progressbar(vid.download_audio(), format!("{}/{}:2", i+1, amount));
 		println!("Combining files.");
 
 		combine_files(vid.filename.video.clone(), vid.filename.audio.clone(), format!("{}.{}", vid.title, vid.ext.video));
