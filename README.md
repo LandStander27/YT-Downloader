@@ -13,3 +13,4 @@
 ### Extra
 - Running with no arguments initiates interactive mode (Not recommended), with arguments instantly carries out the process
 - Run with `--help` to get the arguments options
+- Uses [ffmpeg](https://ffmpeg.org/) and [yt-dlp](https://github.com/yt-dlp/yt-dlp)
