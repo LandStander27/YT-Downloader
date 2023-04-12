@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio, exit};
 use std::io::{BufRead, BufReader, Write};
-use std::fs::File;
+use std::fs::{File};
 use std::path::{Path};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -9,7 +9,7 @@ use colored::Colorize;
 use url::Url;
 
 fn exe_dir(file: &str) -> String {
-	return format!("{}\\{}", std::env::current_exe().unwrap().parent().unwrap().to_str().unwrap().to_string(), file);
+	return format!("{}\\extra\\{}", std::env::current_exe().unwrap().parent().unwrap().to_str().unwrap().to_string(), file);
 }
 
 struct Filename {
@@ -536,6 +536,10 @@ fn read(prompt: &str) -> String {
 
 
 fn main() {
+
+	if !Path::new(&exe_dir("")).exists() {
+		std::fs::create_dir(&exe_dir("")).unwrap();
+	}
 
 	if !Path::new(&exe_dir("yt-dlp.exe")).exists() {
 		download_yt_dlp();
