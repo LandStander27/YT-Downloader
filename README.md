@@ -11,6 +11,6 @@
 - Move the executable somewhere other then downloads, something like `C:\YT_Downloader\yt_down.exe`
 - Run `yt_down.exe`
 ### Extra
-- Running with no arguments initiates interactive mode (Not recommended), with arguments instantly carries out the process
+- Running with no arguments (Ex: From file explorer) initiates interactive mode (Not recommended), with arguments instantly carries out the process
 - Run with `--help` to get the arguments options
 - Uses [ffmpeg](https://ffmpeg.org/) and [yt-dlp](https://github.com/yt-dlp/yt-dlp)
