@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio, exit};
 use std::io::{BufRead, BufReader, Write};
-use std::fs::File;
+use std::fs::{File, rename};
 use std::path::{Path};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -482,15 +482,12 @@ fn combine_files(video: String, audio: String, out: String) {
 }
 
 fn download_playlist(url: &str) {
-	let amount_out = Command::new(&exe_dir("yt-dlp.exe"))
-		.arg("-q")
-		.arg("--print")
-		.arg("playlist_count")
-		.arg(url)
-		.output()
-		.expect("Unable to call yt-dlp");
 
-	let amount: u32 = String::from_utf8(amount_out.stdout).unwrap().split("\n").collect::<Vec<&str>>()[0].trim().parse().unwrap();
+	let playlist = Playlist::new(url.to_string());
+	let folder = playlist.title.clone().replace("/", "").replace("\\", "").replace(":", "").replace("*", "").replace("?", "").replace("\"", "").replace("<", "").replace(">", "").replace("|", "");
+	std::fs::create_dir(folder.clone()).unwrap();
+
+	let amount = playlist.video_amount;
 
 	for i in 0..amount {
 		let url_out = Command::new(&exe_dir("yt-dlp.exe"))
@@ -518,9 +515,12 @@ fn download_playlist(url: &str) {
 		thread::sleep(std::time::Duration::from_millis(750));
 		std::fs::remove_file(vid.filename.video).unwrap();
 		std::fs::remove_file(vid.filename.audio).unwrap();
+		std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/{}.{}", folder, vid.title, vid.ext.video)).unwrap();
 		println!("Downloaded {}", vid.title);
 
 	}
+
+	println!("Downloaded playlist to \"./{}\"", folder);
 
 }
 
