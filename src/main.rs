@@ -26,7 +26,8 @@ struct Video {
 	duration: String,
 	views: u64,
 	likes: u64,
-	channel_subs: u64
+	channel_subs: u64,
+	description: String
 }
 
 impl Video {
@@ -191,6 +192,20 @@ impl Video {
 				.expect("Unable to call yt-dlp");
 		}));
 
+		url_cp = url.clone();
+
+		threads.push(thread::spawn(|| {
+			return Command::new(&exe_dir("yt-dlp.exe"))
+				.arg("-q")
+				.arg("-f")
+				.arg("ba[ext=m4a]")
+				.arg("--print")
+				.arg("description")
+				.arg(url_cp)
+				.output()
+				.expect("Unable to call yt-dlp");
+		}));
+
 		let video = threads.remove(0).join().unwrap();
 		let audio = threads.remove(0).join().unwrap();
 		let title = threads.remove(0).join().unwrap();
@@ -201,6 +216,7 @@ impl Video {
 		let views = threads.remove(0).join().unwrap();
 		let likes = threads.remove(0).join().unwrap();
 		let channel_subs = threads.remove(0).join().unwrap();
+		let description = threads.remove(0).join().unwrap();
 
 		return Self {
 			url: url,
@@ -217,7 +233,8 @@ impl Video {
 			duration: String::from_utf8(duration.stdout).unwrap().trim().to_string(),
 			views: String::from_utf8(views.stdout).unwrap().trim().parse().unwrap(),
 			likes: String::from_utf8(likes.stdout).unwrap().trim().parse().unwrap(),
-			channel_subs: String::from_utf8(channel_subs.stdout).unwrap().trim().parse().unwrap()
+			channel_subs: String::from_utf8(channel_subs.stdout).unwrap().trim().parse().unwrap(),
+			description: String::from_utf8(description.stdout).unwrap().trim().to_string()
 
 		}
 	}
@@ -650,13 +667,34 @@ Arguments:
 
 			if args[1..].contains(&"--info".to_string()) {
 
+// 				println!("
+// Title: {}
+// Duration: {}
+// Views: {}
+// Likes: {}
+// Channel: {}
+// Channel subscribers: {}
+
+// Description:
+// {}", vid.title, vid.duration, vid.views, vid.likes, vid.channel, vid.channel_subs, vid.description);
+
 				println!("
-Title: {}
-Duration: {}
-Views: {}
-Likes: {}
-Channel: {}
-Channel subscribers: {}", vid.title, vid.duration, vid.views, vid.likes, vid.channel, vid.channel_subs);
+{}: {}
+{}: {}
+{}: {}
+{}: {}
+{}: {}
+{}: {}
+
+{}:
+{}", 
+"Title".green(), vid.title, 
+"Duration".green(), vid.duration, 
+"Views".green(), vid.views, 
+"Likes".green(), vid.likes, 
+"Channel".green(), vid.channel, 
+"Channel subscribers".green(), vid.channel_subs, 
+"Description".green(), vid.description);
 
 				exit(0);
 
@@ -697,9 +735,12 @@ Channel subscribers: {}", vid.title, vid.duration, vid.views, vid.likes, vid.cha
 				let playlist = Playlist::new(args[1].to_string());
 
 				println!("
-Title: {}
-Creator: {}
-Video amount: {}", playlist.title, playlist.creator, playlist.video_amount);
+{}: {}
+{}: {}
+{}: {}", 
+"Title".green(), playlist.title, 
+"Creator".green(), playlist.creator, 
+"Video amount".green(), playlist.video_amount);
 
 				exit(0);
 			}
