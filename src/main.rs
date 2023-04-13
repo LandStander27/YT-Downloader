@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio, exit};
 use std::io::{BufRead, BufReader, Write};
-use std::fs::{File};
+use std::fs::File;
 use std::path::{Path};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -409,6 +409,27 @@ fn download_yt_dlp() {
 
 }
 
+fn update() {
+	println!("Updating.");
+
+	let res = reqwest::blocking::get("https://github.com/LandStander27/YT-Downloader/releases/latest/download/yt_down.exe").unwrap();
+
+	let current = std::env::current_exe().unwrap();
+	let new = format!("{}\\yt_down_new.exe", std::env::current_exe().unwrap().parent().unwrap().to_str().unwrap());
+
+	let mut file = File::create(new.clone()).unwrap();
+	file.write_all(&res.bytes().unwrap()).unwrap();
+
+	println!("Writing over executable.");
+	std::fs::rename(current.clone(), format!("{}\\yt_down_old.exe", current.parent().unwrap().to_str().unwrap())).unwrap();
+	if let Err(e) = std::fs::rename(new, current.clone()) {
+		std::fs::rename(format!("{}\\yt_down_old.exe", current.parent().unwrap().to_str().unwrap()), current).unwrap();
+		panic!("{}", e);
+	}
+	println!("Updated.");
+
+}
+
 fn get_latest_ffmpeg_version() -> String {
 	return ureq::get("https://www.gyan.dev/ffmpeg/builds/release-version").call().unwrap().into_string().unwrap();
 }
@@ -637,7 +658,7 @@ fn main() {
 		if args[1..].contains(&"--help".to_string()) {
 
 			println!("
-YT-Downloader made in Rust
+Youtube Downloader made in Rust
 
 usage:
 yt_down [url] [arguments]
@@ -648,7 +669,8 @@ Arguments:
 --audio:    Only download the audio (only available for single videos)
 --info:     Only show the info of the video/playlist
 --github:   Open the github in the default browser
---numbered: Number videos in a playlist incase there are not numbers in the titles (only available for playlists)");
+--numbered: Number videos in a playlist incase there are not numbers in the titles (only available for playlists)
+--update:   Update YT-Downloader");
 
 			exit(0);
 		}
@@ -657,6 +679,12 @@ Arguments:
 
 			open::that("https://github.com/LandStander27/YT-Downloader").unwrap();
 
+			exit(0);
+		}
+
+		if args[1..].contains(&"--update".to_string()) {
+			update();
+			println!("Done.");
 			exit(0);
 		}
 
