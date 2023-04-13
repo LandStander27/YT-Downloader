@@ -600,7 +600,17 @@ fn main() {
 
 	let args: Vec<String> = std::env::args().collect();
 
+	if let Err(e) = ctrlc::set_handler(|| {
+		println!("\nExiting.");
+		exit(0);
+	}) {
+		eprintln!("Could not set ctrl-c handler: {}", e);
+	}
+
 	if args.len() == 1 {
+
+		println!("Starting in interactive mode.");
+		println!("Note: Running with arguments lets you have more control, run with --help for more info.\n");
 
 		let url = read("Url (Can be playlist or video) ? ");
 
