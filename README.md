@@ -10,6 +10,9 @@
 - Download `yt_down.exe` from the latest release
 - Move the executable somewhere other then downloads, something like `C:\YT_Downloader\yt_down.exe`
 - Run `yt_down.exe`
+#### Updating
+- Just do whats in the above section and place `yt_down.exe` in the same spot (replace it)
+- Every once in a while you can remove the `extra` folder and redownload the dependencies.
 ### Extra
 - Running with no arguments (Ex: From file explorer) initiates interactive mode (Not recommended), with arguments instantly carries out the process
 - Run with `--help` to get the arguments options

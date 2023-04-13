@@ -481,13 +481,18 @@ fn combine_files(video: String, audio: String, out: String) {
 		.expect("Unable to call ffmpeg");
 }
 
-fn download_playlist(url: &str) {
+fn download_playlist(url: &str, numbered: bool) {
 
 	println!("If the selected playlist is big (>100), it could take a while to start downloading.");
 
 	let playlist = Playlist::new(url.to_string());
 	let folder = playlist.title.clone().replace("/", "").replace("\\", "").replace(":", "").replace("*", "").replace("?", "").replace("\"", "").replace("<", "").replace(">", "").replace("|", "");
-	std::fs::create_dir(folder.clone()).unwrap();
+	if let Err(e) = std::fs::create_dir(folder.clone()) {
+		if e.to_string() == "Cannot create a file when that file already exists." {
+			eprintln!("Playlist folder already exists.");
+			exit(1);
+		}
+	}
 
 	let amount = playlist.video_amount;
 
@@ -517,7 +522,12 @@ fn download_playlist(url: &str) {
 		thread::sleep(std::time::Duration::from_millis(750));
 		std::fs::remove_file(vid.filename.video).unwrap();
 		std::fs::remove_file(vid.filename.audio).unwrap();
-		std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/{}.{}", folder, vid.title, vid.ext.video)).unwrap();
+		if numbered {
+			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/({}) {}.{}", folder, i+1, vid.title, vid.ext.video)).unwrap();
+		} else {
+			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/{}.{}", folder, vid.title, vid.ext.video)).unwrap();
+		}
+		
 		println!("Downloaded {}", vid.title);
 
 	}
@@ -598,7 +608,7 @@ fn main() {
 			println!("Done.");
 		} else {
 			println!("Loading.");
-			download_playlist(url.as_str());
+			download_playlist(url.as_str(), false);
 			println!("Done.");
 
 		}
@@ -617,10 +627,11 @@ yt_down [url] [arguments]
 
 Arguments:
 
---help:   Show this menu
---audio:  Only download the audio (only available for single videos)
---info:   Only show the info of the video/playlist
---github: Open the github in the default browser");
+--help:     Show this menu
+--audio:    Only download the audio (only available for single videos)
+--info:     Only show the info of the video/playlist
+--github:   Open the github in the default browser
+--numbered: Number videos in a playlist incase there are not numbers in the titles (only available for playlists)");
 
 			exit(0);
 		}
@@ -693,7 +704,7 @@ Video amount: {}", playlist.title, playlist.creator, playlist.video_amount);
 				exit(0);
 			}
 
-			download_playlist(&args[1]);
+			download_playlist(&args[1], args[1..].contains(&"--numbered".to_string()));
 			println!("Done.");
 
 		}
