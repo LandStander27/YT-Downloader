@@ -680,7 +680,8 @@ Arguments:
 --info:     Only show the info of the video/playlist
 --github:   Open the github in the default browser
 --numbered: Number videos in a playlist incase there are not numbers in the titles (only available for playlists)
---update:   Update YT-Downloader");
+--update:   Update YT-Downloader
+--nc-audio: Disables m4a to mp3 conversion, which usually makes it higher quality (only available for --audio)");
 
 			exit(0);
 		}
@@ -739,18 +740,22 @@ Arguments:
 			} else if args[1..].contains(&"--audio".to_string()) {
 				progressbar(vid.download_audio(), "Downloading audio".to_string());
 				
-				let _ = Command::new(&exe_dir("ffmpeg.exe"))
-					.arg("-y")
-					.arg("-i")
-					.arg(vid.filename.audio.clone())
-					.arg("-acodec")
-					.arg("libmp3lame")
-					.arg(format!("{}.mp3", vid.title))
-					.output()
-					.expect("Unable to call ffmpeg");
+				if !(args[1..].contains(&"--nc-audio".to_string())) {
+					let _ = Command::new(&exe_dir("ffmpeg.exe"))
+						.arg("-y")
+						.arg("-i")
+						.arg(vid.filename.audio.clone())
+						.arg("-acodec")
+						.arg("libmp3lame")
+						.arg(format!("{}.mp3", vid.title))
+						.output()
+						.expect("Unable to call ffmpeg");
 
-				thread::sleep(std::time::Duration::from_millis(250));
-				std::fs::remove_file(vid.filename.audio).unwrap();
+					thread::sleep(std::time::Duration::from_millis(250));
+					std::fs::remove_file(vid.filename.audio).unwrap();
+				} else {
+					std::fs::rename(vid.filename.audio.clone(), format!("{}.{}", vid.title, vid.ext.audio)).unwrap();
+				}
 
 			} else {
 				progressbar(vid.download_video(), "Downloading video".to_string());
