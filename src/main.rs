@@ -228,13 +228,13 @@ impl Video {
 				video: String::from_utf8(video_ext.stdout).unwrap().trim().to_string(),
 				audio: String::from_utf8(audio_ext.stdout).unwrap().trim().to_string()
 			},
-			title: String::from_utf8(title.stdout).unwrap().trim().to_string(),
-			channel: String::from_utf8(channel.stdout).unwrap().trim().to_string(),
-			duration: String::from_utf8(duration.stdout).unwrap().trim().to_string(),
-			views: String::from_utf8(views.stdout).unwrap().trim().parse().unwrap(),
-			likes: String::from_utf8(likes.stdout).unwrap().trim().parse().unwrap(),
-			channel_subs: String::from_utf8(channel_subs.stdout).unwrap().trim().parse().unwrap(),
-			description: String::from_utf8(description.stdout).unwrap().trim().to_string()
+			title: String::from_utf8(title.stdout).unwrap_or("Unable to parse title".to_string()).trim().to_string(),
+			channel: String::from_utf8(channel.stdout).unwrap_or("Unable to parse channel name".to_string()).trim().to_string(),
+			duration: String::from_utf8(duration.stdout).unwrap_or("Unable to parse duration".to_string()).trim().to_string(),
+			views: String::from_utf8(views.stdout).unwrap_or("Unable to parse views".to_string()).trim().parse().unwrap(),
+			likes: String::from_utf8(likes.stdout).unwrap_or("Unable to parse likes".to_string()).trim().parse().unwrap(),
+			channel_subs: String::from_utf8(channel_subs.stdout).unwrap_or("Unable to parse channel subs".to_string()).trim().parse().unwrap(),
+			description: String::from_utf8(description.stdout).unwrap_or("Unable to parse description".to_string()).trim().to_string()
 
 		}
 	}
@@ -695,7 +695,6 @@ Arguments:
 
 		if args[1..].contains(&"--update".to_string()) {
 			update();
-			println!("Done.");
 			exit(0);
 		}
 
