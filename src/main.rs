@@ -560,10 +560,11 @@ fn download_playlist(url: &str, numbered: bool) {
 		thread::sleep(std::time::Duration::from_millis(750));
 		std::fs::remove_file(vid.filename.video).unwrap();
 		std::fs::remove_file(vid.filename.audio).unwrap();
+
 		if numbered {
-			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/({}) {}.{}", folder, i+1, vid.title, vid.ext.video)).unwrap();
+			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!(".\\{}\\({}) {}.{}", folder, i+1, vid.title, vid.ext.video)).unwrap();
 		} else {
-			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!("./{}/{}.{}", folder, vid.title, vid.ext.video)).unwrap();
+			std::fs::rename(format!("{}.{}", vid.title, vid.ext.video), format!(".\\{}\\{}.{}", folder, vid.title, vid.ext.video)).unwrap();
 		}
 		
 		println!("Downloaded {}", vid.title);
